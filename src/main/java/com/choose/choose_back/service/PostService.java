@@ -12,7 +12,6 @@ import com.choose.choose_back.repository.postgres.PostRepository;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -176,6 +175,21 @@ public class PostService {
         return "https://choose-image.s3.us-east-2.amazonaws.com/" + key;
     }
 
+    private String uploadImageBase64(String base64, String ext) {
+        String bucket = "choose-image";
+        String key = UUID.randomUUID() + "." + ext;
+        byte[] bytes = Base64.getDecoder().decode(base64);
+        s3Client.putObject(PutObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(key)
+                        .contentType(ext)
+                        .acl(ObjectCannedACL.PUBLIC_READ)
+                        .build(),
+                RequestBody.fromBytes(bytes));
+
+        return "https://choose-image.s3.us-east-2.amazonaws.com/" + key;
+    }
+
     public GetUserFeedResponse getUserFeed(GetUserFeedRequest request) {
         List<PostEntity> entities = postRepository.getUserFeed(request.getUserId(),
                 request.getSize(),
@@ -229,6 +243,20 @@ public class PostService {
                         .map(postMongoRepository::save)
                         .map(votingPost -> assemblerFacade.assemble(post, votingPost, PostDTO.class))
                         .orElseThrow(() -> new IllegalArgumentException("not found"));
+            case PLAYOFF:
+                return postMongoRepository.findById(post.getId())
+                        .map(PlayoffPost.class::cast)
+                        .map(playoffPost -> {
+                            VotingOption option = playoffPost.getOptions().stream()
+                                    .filter(voting -> voting.getId().equals(optionId))
+                                    .findFirst()
+                                    .orElseThrow(() -> new IllegalArgumentException("no option found"));
+                            option.getVotedUsers().add(SecurityUtils.getCurrentUser().getId());
+                            return playoffPost;
+                        })
+                        .map(postMongoRepository::save)
+                        .map(playoffPost -> assemblerFacade.assemble(post, playoffPost, PostDTO.class))
+                        .orElseThrow(() -> new IllegalArgumentException("not found"));
             default:
                 throw new IllegalArgumentException("not voting post");
         }
@@ -269,11 +297,42 @@ public class PostService {
                             post.getDislikedUsers().add(userId);
                             post.getLikedUsers().removeIf(user -> user.equals(userId));
                             break;
+                        case UNSET:
+                            post.getLikedUsers().removeIf(user -> user.equals(userId));
+                            post.getDislikedUsers().removeIf(user -> user.equals(userId));
                     }
                     return post;
                 })
                 .map(postMongoRepository::save)
                 .map(post -> assemblerFacade.assemble(postEntity, post, PostDTO.class))
                 .orElseThrow(() -> new IllegalArgumentException("not found"));
+    }
+
+    public PlayoffPostDTO createPlayoffPost(CreatePlayoffPostRequest request) {
+        PostEntity postEntity = createPostEntity(request.getTitle(), PostType.PLAYOFF);
+        AtomicLong counter = new AtomicLong();
+        PlayoffPost playoffPost = new PlayoffPost();
+        playoffPost.setId(postEntity.getId());
+        playoffPost.setTitle(request.getTitle());
+        playoffPost.setOptions(request.getOptions().stream()
+                .map(option -> {
+                    VotingOption votingOption = new VotingOption();
+                    votingOption.setId(counter.getAndIncrement());
+                    votingOption.setTitle(option.getTitle());
+                    if (option.getFile() != null) {
+                        try {
+                            String url = uploadImage(option.getFile());
+                            votingOption.setMedia(url);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    return votingOption;
+                })
+                .collect(Collectors.toList()));
+        postMongoRepository.save(playoffPost);
+
+
+        return assemblerFacade.assemble(postEntity, playoffPost, PlayoffPostDTO.class);
     }
 }

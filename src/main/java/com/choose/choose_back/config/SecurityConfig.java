@@ -35,10 +35,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .csrf().disable()
                 .authorizeRequests()
                 .antMatchers("/").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/users/**").hasAuthority(USER_READ.getPermission())
-                .antMatchers(HttpMethod.POST,"/api/users/**").hasAuthority(USER_WRITE.getPermission())
-                .antMatchers(HttpMethod.DELETE,"/api/users/**").hasAuthority(USER_WRITE.getPermission())
-                .antMatchers(HttpMethod.PUT,"/api/users/**").hasAuthority(USER_WRITE.getPermission())
+                .antMatchers("/api/users/**").hasAuthority(USER.getPermission())
+                .antMatchers("/api/posts/**").hasAuthority(USER.getPermission())
+                .antMatchers("/api/communities/**").hasAuthority(USER.getPermission())
                 .antMatchers(HttpMethod.POST, "/api/registration/username").permitAll()
                 .antMatchers("/api/registration/**").hasAuthority(REGISTRATION.getPermission())
                 .anyRequest()
@@ -48,7 +47,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .formLogin()
                     .failureHandler(new SimpleUrlAuthenticationFailureHandler())
-                    .successHandler(new SimpleUrlAuthenticationSuccessHandler());
+                    .successHandler(new UrlAuthenticationSuccessHandler());
     }
 
     @Override

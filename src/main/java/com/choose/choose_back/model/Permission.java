@@ -7,8 +7,7 @@ import lombok.Getter;
 @Getter
 public enum Permission {
 
-    USER_READ("users:read"),
-    USER_WRITE("users:write"),
+    USER("user"),
 
     REGISTRATION("registration");
 

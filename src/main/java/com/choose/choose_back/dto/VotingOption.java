@@ -10,5 +10,6 @@ import java.util.Set;
 public class VotingOption {
     private Long id;
     private String title;
+    private String media;
     private Set<Long> votedUsers = new HashSet<>();
 }

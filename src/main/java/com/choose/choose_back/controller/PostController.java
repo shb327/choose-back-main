@@ -3,10 +3,18 @@ package com.choose.choose_back.controller;
 import com.choose.choose_back.dto.*;
 import com.choose.choose_back.dto.post.*;
 import com.choose.choose_back.service.PostService;
+import lombok.SneakyThrows;
+import org.springframework.data.util.StreamUtils;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 @RestController
@@ -67,6 +75,25 @@ public class PostController {
     @PostMapping("/create/voting")
     public VotingPostDTO createVotingPost(@RequestBody CreateVotingPostRequest request) {
         return postService.createVotingPost(request);
+    }
+
+    @SneakyThrows
+    @PostMapping(value = "/create/playoff", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public PlayoffPostDTO createPlayoffPost(@RequestPart("title") String title,
+                                            @RequestPart("options") List<CreatePlayoffPostRequest.PlayoffOption> options,
+                                            @RequestPart("files") MultipartFile[] files) {
+        CreatePlayoffPostRequest requestBody = new CreatePlayoffPostRequest();
+        if (options.size() != files.length) {
+            throw new IllegalArgumentException("options size should equals files size");
+        }
+        requestBody.setOptions(StreamUtils.zip(options.stream(), Stream.of(files), (left, right) -> {
+                    left.setFile(right);
+                    return left;
+                })
+                .collect(Collectors.toList()));
+        requestBody.setTitle(title);
+
+        return postService.createPlayoffPost(requestBody);
     }
 
 

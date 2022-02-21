@@ -15,7 +15,8 @@ public class AssemblerFacade {
             new TextPostAssembler(),
             new ImagePostAssembler(),
             new PetitionPostAssembler(),
-            new VotingPostAssembler()
+            new VotingPostAssembler(),
+            new PlayoffPostAssembler()
     );
 
     public <T extends PostDTO> T assemble(PostEntity entity, BasePost post, Class<T> targetClass) {

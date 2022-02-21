@@ -1,19 +1,19 @@
 package com.choose.choose_back.dto.assembler;
 
 import com.choose.choose_back.SecurityUtils;
-import com.choose.choose_back.domain.mongo.TextPost;
+import com.choose.choose_back.domain.mongo.PlayoffPost;
 import com.choose.choose_back.domain.mongo.VotingPost;
 import com.choose.choose_back.domain.postgres.PostEntity;
 import com.choose.choose_back.dto.VotingOptionDTO;
-import com.choose.choose_back.dto.post.TextPostDTO;
+import com.choose.choose_back.dto.post.PlayoffPostDTO;
 import com.choose.choose_back.dto.post.VotingPostDTO;
 
 import java.util.stream.Collectors;
 
-public class VotingPostAssembler implements Assembler<VotingPost, VotingPostDTO> {
+public class PlayoffPostAssembler implements Assembler<PlayoffPost, PlayoffPostDTO> {
     @Override
-    public VotingPostDTO assemble(PostEntity entity, VotingPost textPost) {
-        VotingPostDTO dto = new VotingPostDTO();
+    public PlayoffPostDTO assemble(PostEntity entity, PlayoffPost textPost) {
+        PlayoffPostDTO dto = new PlayoffPostDTO();
         assembleBase(entity, textPost,  dto);
         dto.setOptions(textPost.getOptions().stream()
                 .map(option -> {
@@ -31,6 +31,6 @@ public class VotingPostAssembler implements Assembler<VotingPost, VotingPostDTO>
 
     @Override
     public boolean isApplicable(Object object) {
-        return object instanceof VotingPost;
+        return object instanceof PlayoffPost;
     }
 }

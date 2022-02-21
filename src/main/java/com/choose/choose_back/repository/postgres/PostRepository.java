@@ -34,7 +34,7 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
             "from community_post " +
             "join post p on p.id = community_post.post_id " +
             "where community_id = :communityId " +
-            "order by p.id " +
+            "order by p.id desc " +
             "limit :limit " +
             "offset :offset", nativeQuery = true)
     List<PostEntity> getCommunityFeed(Long communityId, Long limit, Long offset);

@@ -57,11 +57,20 @@ public class CommunityService {
         return communityRepository.save(community).getId();
     }
 
-    public void update(final Long id, final CommunityDTO communityDTO) {
-        final Community community = communityRepository.findById(id)
+    public CommunityDTO update(final Long id, final UpdateCommunityRequestDTO request) {
+        return communityRepository.findById(id)
+                .map(community -> {
+                    if (request.getName() != null) {
+                        community.setName(request.getName());
+                    }
+                    if (request.getDescription() != null) {
+                        community.setDescription(request.getDescription());
+                    }
+                    return community;
+                })
+                .map(communityRepository::save)
+                .map(community -> mapToDTO(community, new CommunityDTO()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        mapToEntity(communityDTO, community);
-        communityRepository.save(community);
     }
 
     public void delete(final Long id) {
@@ -134,6 +143,14 @@ public class CommunityService {
                         SecurityUtils.getCurrentUser().getId(),
                         request.getSize(),
                         request.getPage() * request.getSize())
+                .stream()
+                .map(community -> mapToDTO(community, new CommunityDTO()))
+                .collect(Collectors.toList());
+    }
+
+    public List<CommunityDTO> getUserOwning() {
+        User user = SecurityUtils.getCurrentUser();
+        return communityRepository.findByOwner(user.getId())
                 .stream()
                 .map(community -> mapToDTO(community, new CommunityDTO()))
                 .collect(Collectors.toList());

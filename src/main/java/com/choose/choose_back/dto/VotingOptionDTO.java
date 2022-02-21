@@ -7,5 +7,6 @@ public class VotingOptionDTO {
     private Long id;
     private String title;
     private Long votedUsers;
+    private String media;
     private boolean voted;
 }

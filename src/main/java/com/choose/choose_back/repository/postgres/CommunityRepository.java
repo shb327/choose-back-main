@@ -36,4 +36,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
             "limit :limit " +
             "offset :offset", nativeQuery = true)
     List<Community> getDiscoverCommunities(Long userId, Long limit, Long offset);
+
+    @Query("FROM Community WHERE owner.id = :ownerId")
+    List<Community> findByOwner(Long ownerId);
 }
